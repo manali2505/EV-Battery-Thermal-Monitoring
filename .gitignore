@@ -1,0 +1,20 @@
+# React
+frontend/node_modules/
+frontend/build/
+
+# Java and Maven
+backend/target/
+*.class
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+!.env.example
