@@ -4,6 +4,10 @@ package com.ev.battery_thermal;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.ResourceAccessException;
+import java.util.Map;
 
 import java.time.Instant;
 import java.util.List;
@@ -15,6 +19,7 @@ public class BatteryReadingController {
 
     private final BatteryReadingRepository readingRepository;
     private final BatteryConfigurationRepository configurationRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     // Constructor injection for both repositories
     public BatteryReadingController(
@@ -60,25 +65,44 @@ public class BatteryReadingController {
 
     // Save a new battery reading
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public BatteryReading createReading(
-            @RequestBody BatteryReading reading) {
+@ResponseStatus(HttpStatus.CREATED)
+public BatteryReading createReading(@RequestBody BatteryReading reading) {
 
-        BatteryConfiguration battery = getBatteryConfiguration(
-                reading.getBatteryId());
+    BatteryConfiguration battery = getBatteryConfiguration(reading.getBatteryId());
 
-        validateReading(reading, battery);
+    validateReading(reading, battery);
 
-        reading.setId(null);
-        reading.setTimestamp(Instant.now());
+    reading.setId(null);
+    reading.setTimestamp(Instant.now());
 
-        reading.setRiskLevel(
-                calculateRisk(
-                        reading.getTemperature(),
-                        battery));
+    // Existing thermal risk calculation
+    reading.setRiskLevel(calculateRisk(reading.getTemperature(), battery));
 
-        return readingRepository.save(reading);
-    }
+    // Random Forest cooling prediction
+    reading.setCoolingRequirement(getCoolingRequirement(reading));
+
+    return readingRepository.save(reading);
+}
+//     @PostMapping
+//     @ResponseStatus(HttpStatus.CREATED)
+//     public BatteryReading createReading(
+//             @RequestBody BatteryReading reading) {
+
+//         BatteryConfiguration battery = getBatteryConfiguration(
+//                 reading.getBatteryId());
+
+//         validateReading(reading, battery);
+
+//         reading.setId(null);
+//         reading.setTimestamp(Instant.now());
+
+//         reading.setRiskLevel(
+//                 calculateRisk(
+//                         reading.getTemperature(),
+//                         battery));
+
+//         return readingRepository.save(reading);
+//     }
 
     // Update an existing battery reading
     @PutMapping("/{id}")
@@ -97,10 +121,15 @@ public class BatteryReadingController {
                 existing.getBatteryId());
 
         validateReading(updatedReading, battery);
-
         existing.setTemperature(updatedReading.getTemperature());
         existing.setVoltage(updatedReading.getVoltage());
         existing.setCurrent(updatedReading.getCurrent());
+        existing.setCoolantTemperature(updatedReading.getCoolantTemperature());
+        existing.setCoolingRequirement(getCoolingRequirement(existing));
+
+        // existing.setTemperature(updatedReading.getTemperature());
+        // existing.setVoltage(updatedReading.getVoltage());
+        // existing.setCurrent(updatedReading.getCurrent());
 
         existing.setRiskLevel(
                 calculateRisk(
@@ -146,14 +175,20 @@ public class BatteryReadingController {
     private void validateReading(
             BatteryReading reading,
             BatteryConfiguration battery) {
-
-        if (!Double.isFinite(reading.getTemperature())
-                || !Double.isFinite(reading.getVoltage())
-                || !Double.isFinite(reading.getCurrent())) {
+                if (!Double.isFinite(reading.getTemperature())
+        || !Double.isFinite(reading.getVoltage())
+        || !Double.isFinite(reading.getCurrent())
+        || !Double.isFinite(reading.getCoolantTemperature())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Reading values must be finite numbers");
         }
+        if (reading.getCoolantTemperature() < -40
+        || reading.getCoolantTemperature() > 100) {
+                throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Coolant temperature is outside the supported input range");
+}
 
         if (reading.getTemperature() < -40
                 || reading.getTemperature() > 100) {
@@ -189,4 +224,56 @@ public class BatteryReadingController {
             return "NORMAL";
         }
     }
+
+    private String getCoolingRequirement(BatteryReading reading) {
+
+    Map<String, Object> request = Map.of(
+            "battery_temperature", reading.getTemperature(),
+            "coolant_temperature", reading.getCoolantTemperature(),
+            "voltage", reading.getVoltage(),
+            "current", reading.getCurrent()
+    );
+
+    try {
+        Map response = restTemplate.postForObject(
+                "http://127.0.0.1:5000/predict",
+                request,
+                Map.class
+        );
+
+        if (response == null || response.get("cooling_requirement") == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "ML service returned an invalid response"
+            );
+        }
+
+        String prediction = response.get("cooling_requirement").toString();
+
+        if (!prediction.equals("LOW")
+                && !prediction.equals("MEDIUM")
+                && !prediction.equals("HIGH")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "ML service returned an unexpected prediction"
+            );
+        }
+
+        return prediction;
+
+    } catch (ResourceAccessException ex) {
+        throw new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Python ML service is unavailable. Please start the Flask server.",
+                ex
+        );
+
+    } catch (RestClientException ex) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_GATEWAY,
+                "Unable to obtain cooling prediction from ML service.",
+                ex
+        );
+    }
+}
 }

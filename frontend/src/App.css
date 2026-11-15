@@ -1,4 +1,386 @@
 
+/* ==============================
+   GLOBAL STYLING
+============================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f1f1f3;
+  color: #29272a;
+}
+
+/* ==============================
+   NAVBAR
+============================== */
+
+.navbar {
+  background: #29272a;
+  color: white;
+  min-height: 72px;
+  padding: 16px 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  flex-wrap: wrap;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+.navbar-brand {
+  font-size: 21px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.3px;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.navbar-links a {
+  color: #e5e1e3;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.navbar-links a:hover {
+  background: #494247;
+  color: white;
+}
+
+.navbar-links a.active {
+  background: #78263f;
+  color: white;
+}
+.brand-icon {
+  color: #d9a5b5;
+  font-size: 23px;
+  margin-right: 9px;
+  vertical-align: middle;
+}
+
+/* ==============================
+   MAIN PAGE LAYOUT
+============================== */
+
+.dashboard {
+  max-width: 1250px;
+  margin: auto;
+  padding: 35px 25px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.header h1 {
+  margin: 0 0 9px;
+  font-size: 29px;
+  color: #641c32;
+}
+
+.header p {
+  margin: 0;
+  color: #77717a;
+  font-size: 15px;
+}
+
+.system-status {
+  color: #21834b;
+  background: #e5f4eb;
+  padding: 10px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ==============================
+   SUMMARY CARDS
+============================== */
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.card,
+.panel {
+  background: #ffffff;
+  padding: 23px;
+  border-radius: 12px;
+  border: 1px solid #e4e1e3;
+  box-shadow: 0 3px 12px rgba(50, 30, 38, 0.06);
+}
+
+.card {
+  border-top: 3px solid #78263f;
+}
+
+.card p {
+  color: #77717a;
+  margin-top: 0;
+  font-size: 14px;
+}
+
+.card h2 {
+  font-size: 27px;
+  margin: 12px 0;
+  color: #641c32;
+}
+
+.card span {
+  color: #858087;
+  font-size: 13px;
+}
+
+.panel {
+  margin-bottom: 24px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #641c32;
+  font-size: 21px;
+}
+
+.panel p {
+  line-height: 1.6;
+}
+
+/* ==============================
+   FORMS
+============================== */
+
+.sensor-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.sensor-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #403b40;
+}
+
+.sensor-form input,
+.sensor-form select {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #d4cfd2;
+  border-radius: 7px;
+  font-size: 14px;
+  background: #faf9fa;
+  color: #29272a;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.sensor-form input:focus,
+.sensor-form select:focus {
+  border-color: #78263f;
+  box-shadow: 0 0 0 3px rgba(120, 38, 63, 0.12);
+  background: #ffffff;
+}
+
+.sensor-form input::placeholder {
+  color: #aaa4a9;
+}
+
+.sensor-form button {
+  padding: 13px 18px;
+  border: none;
+  border-radius: 7px;
+  background: #78263f;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.sensor-form button:hover {
+  background: #641c32;
+  transform: translateY(-1px);
+}
+
+/* ==============================
+   TABLES
+============================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 14px;
+}
+
+th {
+  background: #641c32;
+  color: white;
+  padding: 14px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #e9e6e8;
+  color: #403b40;
+}
+
+tbody tr:nth-child(even) {
+  background: #f7f5f6;
+}
+
+tbody tr:hover {
+  background: #f0e8eb;
+}
+
+/* ==============================
+   STATUS COLOURS
+============================== */
+
+.normal {
+  color: #21834b;
+}
+
+.warning {
+  color: #b7791f;
+}
+
+.critical {
+  color: #c53030;
+}
+
+/* ==============================
+   ALERT CARDS
+============================== */
+
+.alert-card {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 12px rgba(50, 30, 38, 0.06);
+}
+
+.alert-card.warning {
+  border-left: 5px solid #d69e2e;
+}
+
+.alert-card.critical {
+  border-left: 5px solid #c53030;
+}
+
+/* ==============================
+   MESSAGES
+============================== */
+
+.success-message {
+  color: #21834b;
+  background: #e5f4eb;
+  padding: 11px 14px;
+  border-radius: 7px;
+}
+
+.error-message {
+  color: #b42332;
+  background: #fcebed;
+  padding: 11px 14px;
+  border-radius: 7px;
+}
+
+/* ==============================
+   FOOTER
+============================== */
+
+footer {
+  text-align: center;
+  color: #77717a;
+  padding: 22px;
+  font-size: 13px;
+  border-top: 1px solid #e3dfe1;
+  margin-top: 20px;
+}
+
+/* ==============================
+   RESPONSIVE DESIGN
+============================== */
+
+@media (max-width: 900px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    padding: 25px 15px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .summary,
+  .sensor-form {
+    grid-template-columns: 1fr;
+  }
+
+  .navbar-links {
+    width: 100%;
+    gap: 5px;
+  }
+
+  .navbar-links a {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .card,
+  .panel {
+    padding: 18px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+}
+
+
+
+/* 
 * {
   box-sizing: border-box;
 }
@@ -6,7 +388,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f1f5f9;
+  background: #0c0c0c;
   color: #812736;
 }
 
@@ -135,4 +517,4 @@ footer {
   .sensor-form {
     grid-template-columns: 1fr;
   }
-}
+} */

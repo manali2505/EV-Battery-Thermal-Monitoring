@@ -1,4 +1,11 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Navbar from "./components/Navbar";
+import Dashboard from "./pages/Dashboard";
+import BatteryManagement from "./pages/BatteryManagement";
+import SensorReadings from "./pages/SensorReadings";
+import ReadingHistory from "./pages/ReadingHistory";
+import Alerts from "./pages/Alerts";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -285,7 +292,8 @@ function App() {
       batteryId: selectedBatteryId,
       temperature: temp,
       voltage: volt,
-      current: amps
+      current: amps,
+      coolantTemperature: coolant
     };
 
     try {
@@ -362,478 +370,564 @@ function App() {
   );
 
   return (
-    <div className="dashboard">
+     <BrowserRouter>
+    <Navbar />
 
-      {/* Battery registration section */}
-      <section className="panel">
-        <h2>Register a New Battery</h2>
+    <Routes>
+      {/* Dashboard page */}
+      <Route
+        path="/"
+        element={<Dashboard reading={reading} />}
+      />
 
-        <p>
-          Enter the technical specifications of the battery before
-          submitting its sensor readings.
-        </p>
-
-        <form className="sensor-form" onSubmit={handleBatterySubmit}>
-
-          <label>
-            Battery ID
-            <input
-              type="text"
-              value={batteryId}
-              onChange={(e) => setBatteryId(e.target.value)}
-              placeholder="e.g. EV_BAT_002"
-              required
-            />
-          </label>
-
-          <label>
-            Battery Type
-            <input
-              type="text"
-              value={batteryType}
-              onChange={(e) => setBatteryType(e.target.value)}
-              placeholder="e.g. Lithium-ion"
-              required
-            />
-          </label>
-
-          <label>
-            Nominal Voltage (V)
-            <input
-              type="number"
-              step="any"
-              value={nominalVoltage}
-              onChange={(e) => setNominalVoltage(e.target.value)}
-              placeholder="e.g. 400"
-              required
-            />
-          </label>
-
-          <label>
-            Minimum Voltage (V)
-            <input
-              type="number"
-              step="any"
-              value={minimumVoltage}
-              onChange={(e) => setMinimumVoltage(e.target.value)}
-              placeholder="e.g. 300"
-              required
-            />
-          </label>
-
-          <label>
-            Maximum Voltage (V)
-            <input
-              type="number"
-              step="any"
-              value={maximumVoltage}
-              onChange={(e) => setMaximumVoltage(e.target.value)}
-              placeholder="e.g. 450"
-              required
-            />
-          </label>
-
-          <label>
-            Warning Temperature (°C)
-            <input
-              type="number"
-              step="any"
-              value={warningTemperature}
-              onChange={(e) => setWarningTemperature(e.target.value)}
-              placeholder="e.g. 40"
-              required
-            />
-          </label>
-
-          <label>
-            Critical Temperature (°C)
-            <input
-              type="number"
-              step="any"
-              value={criticalTemperature}
-              onChange={(e) => setCriticalTemperature(e.target.value)}
-              placeholder="e.g. 50"
-              required
-            />
-          </label>
-
-          <button type="submit">
-            Register Battery
-          </button>
-
-        </form>
-
-        {/* Show registration success or error */}
-        {batteryMessage && (
-          <p style={{ color: "green" }}>{batteryMessage}</p>
-        )}
-
-        {batteryError && (
-          <p style={{ color: "red" }}>{batteryError}</p>
-        )}
-      </section>
-
-      {/* Display batteries retrieved from the backend */}
-      <section className="panel">
-        <h2>Registered Batteries</h2>
-
-        {batteries.length === 0 ? (
-          <p>No batteries registered yet.</p>
-        ) : (
-          <div>
-            {batteries.map((battery) => (
-              <div
-                key={battery.id}
-                className="card"
-                style={{ marginBottom: "15px" }}
-              >
-                <h3>{battery.batteryId}</h3>
-
-                <p>Battery Type: {battery.batteryType}</p>
-
-                <p>
-                  Nominal Voltage: {battery.nominalVoltage} V
-                </p>
-
-                <p>
-                  Voltage Range: {battery.minimumVoltage} V -
-                  {battery.maximumVoltage} V
-                </p>
-
-                <p>
-                  Warning Temperature: {battery.warningTemperature} °C
-                </p>
-
-                <p>
-                  Critical Temperature: {battery.criticalTemperature} °C
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <header className="header">
-        <div>
-          <h1>EV Battery Thermal Monitoring</h1>
-          <p>AI-Enabled Micro-channel Battery Thermal Management</p>
-        </div>
-        <span className="system-status">● Dashboard Active</span>
-      </header>
-
-      <section className="summary">
-        <div className="card">
-          <p>Battery Temperature</p>
-          <h2>{reading ? `${reading.temperature} °C` : "-- °C"}</h2>
-          <span>Latest submitted reading</span>
-        </div>
-
-        <div className="card">
-          <p>Battery Voltage</p>
-          <h2>{reading ? `${reading.voltage} V` : "-- V"}</h2>
-          <span>Pack voltage</span>
-        </div>
-
-        <div className="card">
-          <p>Current</p>
-          <h2>{reading ? `${reading.current} A` : "-- A"}</h2>
-          <span>Current reading</span>
-        </div>
-
-        <div className="card">
-          <p>Thermal Risk</p>
-          <h2>{reading ? reading.risk : "NO DATA"}</h2>
-          <span>
-            {reading
-              ? "Calculated from submitted values"
-              : "Submit a reading to begin"}
-          </span>
-        </div>
-      </section>
-
-      <section className="panel">
-        <h2>Battery Sensor Reading</h2>
-
-        <form className="sensor-form" onSubmit={handleSubmit}>
-
-          {/* Select the registered battery */}
-          <label>
-            Select Battery
-            <select
-              value={selectedBatteryId}
-              onChange={(e) => setSelectedBatteryId(e.target.value)}
-              required
-            >
-              <option value="">-- Select a registered battery --</option>
-
-              {batteries.map((battery) => (
-                <option key={battery.id} value={battery.batteryId}>
-                  {battery.batteryId} - {battery.batteryType}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {/* Enter battery temperature */}
-          <label>
-            Temperature (°C)
-            <input
-              type="number"
-              step="any"
-              value={temperature}
-              onChange={(e) => setTemperature(e.target.value)}
-              placeholder="e.g. 35"
-              required
-            />
-          </label>
-
-          {/* Enter battery voltage */}
-          <label>
-            Voltage (V)
-            <input
-              type="number"
-              step="any"
-              min="0"
-              value={voltage}
-              onChange={(e) => setVoltage(e.target.value)}
-              placeholder="e.g. 380"
-              required
-            />
-          </label>
-
-          {/* Enter battery current */}
-          <label>
-            Current (A)
-            
-            <input
-          type="number"
-          step="any"
-          // min="0"
-          max="1000"
-          value={current}
-          onChange={(e) => setCurrent(e.target.value)}
-          placeholder="e.g. 45"
-          required
+      {/* Battery Management page */}
+      <Route
+        path="/batteries"
+        element={
+          <BatteryManagement
+            batteryId={batteryId}
+            setBatteryId={setBatteryId}
+            batteryType={batteryType}
+            setBatteryType={setBatteryType}
+            nominalVoltage={nominalVoltage}
+            setNominalVoltage={setNominalVoltage}
+            minimumVoltage={minimumVoltage}
+            setMinimumVoltage={setMinimumVoltage}
+            maximumVoltage={maximumVoltage}
+            setMaximumVoltage={setMaximumVoltage}
+            warningTemperature={warningTemperature}
+            setWarningTemperature={setWarningTemperature}
+            criticalTemperature={criticalTemperature}
+            setCriticalTemperature={setCriticalTemperature}
+            handleBatterySubmit={handleBatterySubmit}
+            batteries={batteries}
+            batteryMessage={batteryMessage}
+            batteryError={batteryError}
           />
-          </label>
+        }
+      />
 
-          {/* Enter coolant temperature */}
-          <label>
-            Coolant Temperature (°C)
-            <input
-              type="number"
-              step="any"
-              value={coolantTemperature}
-              onChange={(e) => setCoolantTemperature(e.target.value)}
-              placeholder="e.g. 31"
-              required
-            />
-          </label>
+      {/* Sensor Readings page */}
+      <Route
+        path="/readings/new"
+        element={
+          <SensorReadings
+            selectedBatteryId={selectedBatteryId}
+            setSelectedBatteryId={setSelectedBatteryId}
+            batteries={batteries}
+            temperature={temperature}
+            setTemperature={setTemperature}
+            voltage={voltage}
+            setVoltage={setVoltage}
+            current={current}
+            setCurrent={setCurrent}
+            coolantTemperature={coolantTemperature}
+            setCoolantTemperature={setCoolantTemperature}
+            handleSubmit={handleSubmit}
+            error={error}
+          />
+        }
+      />
 
-          <button type="submit">Analyze Reading</button>
+      {/* Reading History page */}
+      <Route
+        path="/readings/history"
+        element={
+          <ReadingHistory
+            historicalReadings={historicalReadings}
+            historyLoading={historyLoading}
+            historyError={historyError}
+          />
+        }
+      />
 
-        </form>
+      {/* Alerts page */}
+      <Route
+        path="/alerts"
+        element={
+          <Alerts
+            historicalReadings={historicalReadings}
+          />
+        }
+      />
+    </Routes>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </section>
+    <footer>
+      EV Battery Thermal Monitoring Dashboard · Academic Prototype
+    </footer>
+  </BrowserRouter>
+    // <div className="dashboard">
 
-      <section className="panel">
-        <h2>Latest Analysis</h2>
+    //   {/* Battery registration section */}
+    //   <section className="panel">
+    //     <h2>Register a New Battery</h2>
 
-        {!reading ? (
-          <p>Submit a sensor reading to see the thermal analysis.</p>
-        ) : (
-          <>
-            <p>Recorded at: {reading.time}</p>
+    //     <p>
+    //       Enter the technical specifications of the battery before
+    //       submitting its sensor readings.
+    //     </p>
 
-            <p>
-              Coolant temperature: {reading.coolantTemperature} °C
-            </p>
+    //     <form className="sensor-form" onSubmit={handleBatterySubmit}>
 
-            <p>
-              Risk result: <strong>{reading.risk}</strong>
-            </p>
+    //       <label>
+    //         Battery ID
+    //         <input
+    //           type="text"
+    //           value={batteryId}
+    //           onChange={(e) => setBatteryId(e.target.value)}
+    //           placeholder="e.g. EV_BAT_002"
+    //           required
+    //         />
+    //       </label>
 
-            <p>
-              {reading.risk === "CRITICAL"
-                ? "Critical temperature detected. Stop the test safely and inspect the cooling system."
-                : reading.risk === "WARNING"
-                ? "Elevated thermal risk. Check coolant temperature and cooling circulation."
-                : "Temperature is within this prototype's configured normal range."}
-            </p>
-          </>
-        )}
-      </section>
+    //       <label>
+    //         Battery Type
+    //         <input
+    //           type="text"
+    //           value={batteryType}
+    //           onChange={(e) => setBatteryType(e.target.value)}
+    //           placeholder="e.g. Lithium-ion"
+    //           required
+    //         />
+    //       </label>
 
-      {/* Display historical sensor readings */}
-      <section className="panel">
-        <h2>Historical Battery Readings</h2>
+    //       <label>
+    //         Nominal Voltage (V)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={nominalVoltage}
+    //           onChange={(e) => setNominalVoltage(e.target.value)}
+    //           placeholder="e.g. 400"
+    //           required
+    //         />
+    //       </label>
 
-        {!selectedBatteryId ? (
-          <p>Please select a battery to view its historical readings.</p>
-        ) : historyLoading ? (
-          <p>Loading historical readings...</p>
-        ) : historyError ? (
-          <p style={{ color: "red" }}>{historyError}</p>
-        ) : historicalReadings.length === 0 ? (
-          <p>No historical readings available for this battery.</p>
-        ) : (
-          <>
-            <p>
-              Showing previous readings for: <strong>{selectedBatteryId}</strong>
-            </p>
+    //       <label>
+    //         Minimum Voltage (V)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={minimumVoltage}
+    //           onChange={(e) => setMinimumVoltage(e.target.value)}
+    //           placeholder="e.g. 300"
+    //           required
+    //         />
+    //       </label>
 
-            <div style={{ overflowX: "auto" }}>
-              <table style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "center"
-              }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                      Temperature (°C)
-                    </th>
-                    <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                      Voltage (V)
-                    </th>
-                    <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                      Current (A)
-                    </th>
-                    <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                      Risk Level
-                    </th>
-                    <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                      Date and Time
-                    </th>
-                  </tr>
-                </thead>
+    //       <label>
+    //         Maximum Voltage (V)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={maximumVoltage}
+    //           onChange={(e) => setMaximumVoltage(e.target.value)}
+    //           placeholder="e.g. 450"
+    //           required
+    //         />
+    //       </label>
 
-                <tbody>
-                  {historicalReadings.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
-                        {item.temperature}
-                      </td>
+    //       <label>
+    //         Warning Temperature (°C)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={warningTemperature}
+    //           onChange={(e) => setWarningTemperature(e.target.value)}
+    //           placeholder="e.g. 40"
+    //           required
+    //         />
+    //       </label>
 
-                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
-                        {item.voltage}
-                      </td>
+    //       <label>
+    //         Critical Temperature (°C)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={criticalTemperature}
+    //           onChange={(e) => setCriticalTemperature(e.target.value)}
+    //           placeholder="e.g. 50"
+    //           required
+    //         />
+    //       </label>
 
-                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
-                        {item.current}
-                      </td>
+    //       <button type="submit">
+    //         Register Battery
+    //       </button>
 
-                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
-                        <strong>{item.riskLevel}</strong>
-                      </td>
+    //     </form>
 
-                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
-                        {new Date(item.timestamp).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </section>
+    //     {/* Show registration success or error */}
+    //     {batteryMessage && (
+    //       <p style={{ color: "green" }}>{batteryMessage}</p>
+    //     )}
 
-      {/* Battery temperature trend chart */}
-      <section className="panel">
-        <h2>Battery Temperature Trend</h2>
+    //     {batteryError && (
+    //       <p style={{ color: "red" }}>{batteryError}</p>
+    //     )}
+    //   </section>
 
-        {!selectedBatteryId ? (
-          <p>Please select a battery to view its temperature trend.</p>
-        ) : historicalReadings.length === 0 ? (
-          <p>No historical temperature data available.</p>
-        ) : (
-          <>
-            <p>
-              Temperature variation for: <strong>{selectedBatteryId}</strong>
-            </p>
+    //   {/* Display batteries retrieved from the backend */}
+    //   <section className="panel">
+    //     <h2>Registered Batteries</h2>
 
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart
-                data={[...temperatureChartData].reverse()}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 10,
-                  bottom: 45
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
+    //     {batteries.length === 0 ? (
+    //       <p>No batteries registered yet.</p>
+    //     ) : (
+    //       <div>
+    //         {batteries.map((battery) => (
+    //           <div
+    //             key={battery.id}
+    //             className="card"
+    //             style={{ marginBottom: "15px" }}
+    //           >
+    //             <h3>{battery.batteryId}</h3>
 
-                <XAxis
-                  dataKey="time"
-                  tick={{ fontSize: 12 }}
-                  height={35}
-                />
+    //             <p>Battery Type: {battery.batteryType}</p>
 
-                <YAxis
-                  label={{
-                    value: "Temperature (°C)",
-                    angle: -90,
-                    position: "insideLeft"
-                  }}
-                />
+    //             <p>
+    //               Nominal Voltage: {battery.nominalVoltage} V
+    //             </p>
 
-                <Tooltip />
+    //             <p>
+    //               Voltage Range: {battery.minimumVoltage} V -
+    //               {battery.maximumVoltage} V
+    //             </p>
 
-                <Legend
-                  wrapperStyle={{ paddingTop: "15px" }}
-                />
+    //             <p>
+    //               Warning Temperature: {battery.warningTemperature} °C
+    //             </p>
 
-                {selectedBattery && (
-                  <>
-                    <ReferenceLine
-                      y={selectedBattery.warningTemperature}
-                      stroke="orange"
-                      strokeDasharray="5 5"
-                      label="Warning"
-                    />
+    //             <p>
+    //               Critical Temperature: {battery.criticalTemperature} °C
+    //             </p>
+    //           </div>
+    //         ))}
+    //       </div>
+    //     )}
+    //   </section>
 
-                    <ReferenceLine
-                      y={selectedBattery.criticalTemperature}
-                      stroke="red"
-                      strokeDasharray="5 5"
-                      label="Critical"
-                    />
-                  </>
-                )}
+    //   <header className="header">
+    //     <div>
+    //       <h1>EV Battery Thermal Monitoring</h1>
+    //       <p>AI-Enabled Micro-channel Battery Thermal Management</p>
+    //     </div>
+    //     <span className="system-status">● Dashboard Active</span>
+    //   </header>
 
-                <Line
-                  type="monotone"
-                  dataKey="temperature"
-                  name="Battery Temperature"
-                  stroke="#2563eb"
-                  strokeWidth={3}
-                  dot={{ r: 5 }}
-                  activeDot={{ r: 7 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+    //   <section className="summary">
+    //     <div className="card">
+    //       <p>Battery Temperature</p>
+    //       <h2>{reading ? `${reading.temperature} °C` : "-- °C"}</h2>
+    //       <span>Latest submitted reading</span>
+    //     </div>
 
-            <p
-              style={{
-                textAlign: "center",
-                marginTop: "5px",
-                marginBottom: "0",
-                fontSize: "14px"
-              }}
-            >
-              Recording Time
-            </p>
-          </>
-        )}
-      </section>
+    //     <div className="card">
+    //       <p>Battery Voltage</p>
+    //       <h2>{reading ? `${reading.voltage} V` : "-- V"}</h2>
+    //       <span>Pack voltage</span>
+    //     </div>
 
-      <footer>
-        EV Battery Thermal Monitoring Dashboard · Academic Prototype
-      </footer>
-    </div>
+    //     <div className="card">
+    //       <p>Current</p>
+    //       <h2>{reading ? `${reading.current} A` : "-- A"}</h2>
+    //       <span>Current reading</span>
+    //     </div>
+
+    //     <div className="card">
+    //       <p>Thermal Risk</p>
+    //       <h2>{reading ? reading.risk : "NO DATA"}</h2>
+    //       <span>
+    //         {reading
+    //           ? "Calculated from submitted values"
+    //           : "Submit a reading to begin"}
+    //       </span>
+    //     </div>
+    //   </section>
+
+    //   <section className="panel">
+    //     <h2>Battery Sensor Reading</h2>
+
+    //     <form className="sensor-form" onSubmit={handleSubmit}>
+
+    //       {/* Select the registered battery */}
+    //       <label>
+    //         Select Battery
+    //         <select
+    //           value={selectedBatteryId}
+    //           onChange={(e) => setSelectedBatteryId(e.target.value)}
+    //           required
+    //         >
+    //           <option value="">-- Select a registered battery --</option>
+
+    //           {batteries.map((battery) => (
+    //             <option key={battery.id} value={battery.batteryId}>
+    //               {battery.batteryId} - {battery.batteryType}
+    //             </option>
+    //           ))}
+    //         </select>
+    //       </label>
+
+    //       {/* Enter battery temperature */}
+    //       <label>
+    //         Temperature (°C)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={temperature}
+    //           onChange={(e) => setTemperature(e.target.value)}
+    //           placeholder="e.g. 35"
+    //           required
+    //         />
+    //       </label>
+
+    //       {/* Enter battery voltage */}
+    //       <label>
+    //         Voltage (V)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           min="0"
+    //           value={voltage}
+    //           onChange={(e) => setVoltage(e.target.value)}
+    //           placeholder="e.g. 380"
+    //           required
+    //         />
+    //       </label>
+
+    //       {/* Enter battery current */}
+    //       <label>
+    //         Current (A)
+            
+    //         <input
+    //       type="number"
+    //       step="any"
+    //       // min="0"
+    //       max="1000"
+    //       value={current}
+    //       onChange={(e) => setCurrent(e.target.value)}
+    //       placeholder="e.g. 45"
+    //       required
+    //       />
+    //       </label>
+
+    //       {/* Enter coolant temperature */}
+    //       <label>
+    //         Coolant Temperature (°C)
+    //         <input
+    //           type="number"
+    //           step="any"
+    //           value={coolantTemperature}
+    //           onChange={(e) => setCoolantTemperature(e.target.value)}
+    //           placeholder="e.g. 31"
+    //           required
+    //         />
+    //       </label>
+
+    //       <button type="submit">Analyze Reading</button>
+
+    //     </form>
+
+    //     {error && <p style={{ color: "red" }}>{error}</p>}
+    //   </section>
+
+    //   <section className="panel">
+    //     <h2>Latest Analysis</h2>
+
+    //     {!reading ? (
+    //       <p>Submit a sensor reading to see the thermal analysis.</p>
+    //     ) : (
+    //       <>
+    //         <p>Recorded at: {reading.time}</p>
+
+    //         <p>
+    //           Coolant temperature: {reading.coolantTemperature} °C
+    //         </p>
+
+    //         <p>
+    //           Risk result: <strong>{reading.risk}</strong>
+    //         </p>
+
+    //         <p>
+    //           {reading.risk === "CRITICAL"
+    //             ? "Critical temperature detected. Stop the test safely and inspect the cooling system."
+    //             : reading.risk === "WARNING"
+    //             ? "Elevated thermal risk. Check coolant temperature and cooling circulation."
+    //             : "Temperature is within this prototype's configured normal range."}
+    //         </p>
+    //       </>
+    //     )}
+    //   </section>
+
+    //   {/* Display historical sensor readings */}
+    //   <section className="panel">
+    //     <h2>Historical Battery Readings</h2>
+
+    //     {!selectedBatteryId ? (
+    //       <p>Please select a battery to view its historical readings.</p>
+    //     ) : historyLoading ? (
+    //       <p>Loading historical readings...</p>
+    //     ) : historyError ? (
+    //       <p style={{ color: "red" }}>{historyError}</p>
+    //     ) : historicalReadings.length === 0 ? (
+    //       <p>No historical readings available for this battery.</p>
+    //     ) : (
+    //       <>
+    //         <p>
+    //           Showing previous readings for: <strong>{selectedBatteryId}</strong>
+    //         </p>
+
+    //         <div style={{ overflowX: "auto" }}>
+    //           <table style={{
+    //             width: "100%",
+    //             borderCollapse: "collapse",
+    //             textAlign: "center"
+    //           }}>
+    //             <thead>
+    //               <tr>
+    //                 <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
+    //                   Temperature (°C)
+    //                 </th>
+    //                 <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
+    //                   Voltage (V)
+    //                 </th>
+    //                 <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
+    //                   Current (A)
+    //                 </th>
+    //                 <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
+    //                   Risk Level
+    //                 </th>
+    //                 <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
+    //                   Date and Time
+    //                 </th>
+    //               </tr>
+    //             </thead>
+
+    //             <tbody>
+    //               {historicalReadings.map((item) => (
+    //                 <tr key={item.id}>
+    //                   <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+    //                     {item.temperature}
+    //                   </td>
+
+    //                   <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+    //                     {item.voltage}
+    //                   </td>
+
+    //                   <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+    //                     {item.current}
+    //                   </td>
+
+    //                   <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+    //                     <strong>{item.riskLevel}</strong>
+    //                   </td>
+
+    //                   <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+    //                     {new Date(item.timestamp).toLocaleString()}
+    //                   </td>
+    //                 </tr>
+    //               ))}
+    //             </tbody>
+    //           </table>
+    //         </div>
+    //       </>
+    //     )}
+    //   </section>
+
+    //   {/* Battery temperature trend chart */}
+    //   <section className="panel">
+    //     <h2>Battery Temperature Trend</h2>
+
+    //     {!selectedBatteryId ? (
+    //       <p>Please select a battery to view its temperature trend.</p>
+    //     ) : historicalReadings.length === 0 ? (
+    //       <p>No historical temperature data available.</p>
+    //     ) : (
+    //       <>
+    //         <p>
+    //           Temperature variation for: <strong>{selectedBatteryId}</strong>
+    //         </p>
+
+    //         <ResponsiveContainer width="100%" height={350}>
+    //           <LineChart
+    //             data={[...temperatureChartData].reverse()}
+    //             margin={{
+    //               top: 20,
+    //               right: 30,
+    //               left: 10,
+    //               bottom: 45
+    //             }}
+    //           >
+    //             <CartesianGrid strokeDasharray="3 3" />
+
+    //             <XAxis
+    //               dataKey="time"
+    //               tick={{ fontSize: 12 }}
+    //               height={35}
+    //             />
+
+    //             <YAxis
+    //               label={{
+    //                 value: "Temperature (°C)",
+    //                 angle: -90,
+    //                 position: "insideLeft"
+    //               }}
+    //             />
+
+    //             <Tooltip />
+
+    //             <Legend
+    //               wrapperStyle={{ paddingTop: "15px" }}
+    //             />
+
+    //             {selectedBattery && (
+    //               <>
+    //                 <ReferenceLine
+    //                   y={selectedBattery.warningTemperature}
+    //                   stroke="orange"
+    //                   strokeDasharray="5 5"
+    //                   label="Warning"
+    //                 />
+
+    //                 <ReferenceLine
+    //                   y={selectedBattery.criticalTemperature}
+    //                   stroke="red"
+    //                   strokeDasharray="5 5"
+    //                   label="Critical"
+    //                 />
+    //               </>
+    //             )}
+
+    //             <Line
+    //               type="monotone"
+    //               dataKey="temperature"
+    //               name="Battery Temperature"
+    //               stroke="#2563eb"
+    //               strokeWidth={3}
+    //               dot={{ r: 5 }}
+    //               activeDot={{ r: 7 }}
+    //             />
+    //           </LineChart>
+    //         </ResponsiveContainer>
+
+    //         <p
+    //           style={{
+    //             textAlign: "center",
+    //             marginTop: "5px",
+    //             marginBottom: "0",
+    //             fontSize: "14px"
+    //           }}
+    //         >
+    //           Recording Time
+    //         </p>
+    //       </>
+    //     )}
+    //   </section>
+
+    //   <footer>
+    //     EV Battery Thermal Monitoring Dashboard · Academic Prototype
+    //   </footer>
+    // </div>
   );
 }
 

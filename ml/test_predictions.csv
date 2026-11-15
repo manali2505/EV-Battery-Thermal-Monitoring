@@ -1,0 +1,11 @@
+battery_temperature,coolant_temperature,voltage,current,temperature_difference,predicted_cooling_requirement
+28,20,380,35,8,LOW
+35,25,375,45,10,LOW
+42,28,380,65,14,MEDIUM
+48,30,370,80,18,HIGH
+55,32,380,90,23,HIGH
+60,35,390,110,25,HIGH
+38,36,365,50,2,MEDIUM
+45,40,380,75,5,MEDIUM
+32,42,375,30,-10,MEDIUM
+52,25,400,120,27,HIGH

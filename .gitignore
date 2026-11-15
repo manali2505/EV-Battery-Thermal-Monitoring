@@ -18,3 +18,16 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Python
+ml/venv/
+ml/.venv/
+ml/__pycache__/
+ml/*.pyc
+
+# Backup files
+frontend/src/App_backup.js
+frontend/src/App_backup.css
+
+# ZIP backup
+frontend.zip
