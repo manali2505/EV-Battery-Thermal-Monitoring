@@ -1,6 +1,6 @@
 
 package com.ev.battery_thermal;
-
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,6 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/batteries")
 @CrossOrigin(origins = "http://localhost:3000")
+@SecurityRequirement(name = "bearerAuth")
 public class BatteryConfigurationController {
 
     private final BatteryConfigurationRepository repository;

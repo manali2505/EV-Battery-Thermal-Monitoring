@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import BatteryManagement from "./pages/BatteryManagement";
@@ -7,7 +9,10 @@ import SensorReadings from "./pages/SensorReadings";
 import ReadingHistory from "./pages/ReadingHistory";
 import Alerts from "./pages/Alerts";
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./api";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+// import axios from "axios";
 import {
   LineChart,
   Line,
@@ -20,7 +25,11 @@ import {
   ReferenceLine
 } from "recharts";
 import "./App.css";
+function ProtectedRoute({ children }) {
+  const { token } = useAuth();
 
+  return token ? children : <Navigate to="/login" replace />;
+}
 function App() {
   // Store the battery selected for sensor monitoring
   const [selectedBatteryId, setSelectedBatteryId] = useState("");
@@ -61,9 +70,7 @@ function App() {
   useEffect(() => {
     async function fetchBatteries() {
       try {
-        const response = await axios.get(
-          "http://localhost:8080/api/batteries"
-        );
+        const response = await api.get("/api/batteries");
 
         // Store the batteries received from the backend
         setBatteries(response.data);
@@ -95,8 +102,8 @@ function App() {
         setHistoryError("");
 
         // Request previous readings for the selected battery
-        const response = await axios.get(
-          `http://localhost:8080/api/readings/battery/${selectedBatteryId}`
+        const response = await api.get(
+          `/api/readings/battery/${selectedBatteryId}`
         );
 
         // Sort readings by timestamp, newest first
@@ -195,10 +202,7 @@ function App() {
 
     try {
       // Send the battery details to the Spring Boot REST API
-      const response = await axios.post(
-        "http://localhost:8080/api/batteries",
-        batteryData
-      );
+      const response = await api.post("/api/batteries", batteryData);
 
       // Display a message after successful registration
       setBatteryMessage(
@@ -298,10 +302,7 @@ function App() {
 
     try {
       // Send the sensor reading to Spring Boot
-      const response = await axios.post(
-        "http://localhost:8080/api/readings",
-        readingData
-      );
+      const response = await api.post("/api/readings", readingData);
 
       // Store the response returned by the backend
       const savedReading = response.data;
@@ -318,8 +319,8 @@ function App() {
       });
 
       // Refresh historical readings after successfully saving
-      const historyResponse = await axios.get(
-        `http://localhost:8080/api/readings/battery/${selectedBatteryId}`
+      const historyResponse = await api.get(
+        `/api/readings/battery/${selectedBatteryId}`
       );
 
       // Sort the latest readings first
@@ -370,92 +371,588 @@ function App() {
   );
 
   return (
-     <BrowserRouter>
-    <Navbar />
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
 
-    <Routes>
-      {/* Dashboard page */}
-      <Route
-        path="/"
-        element={<Dashboard reading={reading} />}
-      />
+        <Routes>
+          {/* Login page */}
+        <Route
+        path="/login"
+         element={<Login />}
+        />
 
-      {/* Battery Management page */}
-      <Route
-        path="/batteries"
-        element={
-          <BatteryManagement
-            batteryId={batteryId}
-            setBatteryId={setBatteryId}
-            batteryType={batteryType}
-            setBatteryType={setBatteryType}
-            nominalVoltage={nominalVoltage}
-            setNominalVoltage={setNominalVoltage}
-            minimumVoltage={minimumVoltage}
-            setMinimumVoltage={setMinimumVoltage}
-            maximumVoltage={maximumVoltage}
-            setMaximumVoltage={setMaximumVoltage}
-            warningTemperature={warningTemperature}
-            setWarningTemperature={setWarningTemperature}
-            criticalTemperature={criticalTemperature}
-            setCriticalTemperature={setCriticalTemperature}
-            handleBatterySubmit={handleBatterySubmit}
-            batteries={batteries}
-            batteryMessage={batteryMessage}
-            batteryError={batteryError}
+{/* Registration page */}
+<Route
+  path="/register"
+  element={<Register />}
+/>
+          {/* Dashboard page */}
+          <Route
+  path="/"
+  element={
+    <ProtectedRoute>
+      <Dashboard reading={reading} />
+    </ProtectedRoute>
+  }
+/>
+
+          {/* Battery Management page */}
+          <Route
+            path="/batteries"
+            element={
+               <ProtectedRoute>
+              <BatteryManagement
+                batteryId={batteryId}
+                setBatteryId={setBatteryId}
+                batteryType={batteryType}
+                setBatteryType={setBatteryType}
+                nominalVoltage={nominalVoltage}
+                setNominalVoltage={setNominalVoltage}
+                minimumVoltage={minimumVoltage}
+                setMinimumVoltage={setMinimumVoltage}
+                maximumVoltage={maximumVoltage}
+                setMaximumVoltage={setMaximumVoltage}
+                warningTemperature={warningTemperature}
+                setWarningTemperature={setWarningTemperature}
+                criticalTemperature={criticalTemperature}
+                setCriticalTemperature={setCriticalTemperature}
+                handleBatterySubmit={handleBatterySubmit}
+                batteries={batteries}
+                batteryMessage={batteryMessage}
+                batteryError={batteryError}
+              />
+              </ProtectedRoute>
+            }
           />
-        }
-      />
 
-      {/* Sensor Readings page */}
-      <Route
-        path="/readings/new"
-        element={
-          <SensorReadings
-            selectedBatteryId={selectedBatteryId}
-            setSelectedBatteryId={setSelectedBatteryId}
-            batteries={batteries}
-            temperature={temperature}
-            setTemperature={setTemperature}
-            voltage={voltage}
-            setVoltage={setVoltage}
-            current={current}
-            setCurrent={setCurrent}
-            coolantTemperature={coolantTemperature}
-            setCoolantTemperature={setCoolantTemperature}
-            handleSubmit={handleSubmit}
-            error={error}
+          {/* Sensor Readings page */}
+          <Route
+            path="/readings/new"
+            element={
+              <ProtectedRoute>
+              <SensorReadings
+                selectedBatteryId={selectedBatteryId}
+                setSelectedBatteryId={setSelectedBatteryId}
+                batteries={batteries}
+                temperature={temperature}
+                setTemperature={setTemperature}
+                voltage={voltage}
+                setVoltage={setVoltage}
+                current={current}
+                setCurrent={setCurrent}
+                coolantTemperature={coolantTemperature}
+                setCoolantTemperature={setCoolantTemperature}
+                handleSubmit={handleSubmit}
+                error={error}
+              />
+              </ProtectedRoute>
+            }
           />
-        }
-      />
 
-      {/* Reading History page */}
-      <Route
-        path="/readings/history"
-        element={
-          <ReadingHistory
-            historicalReadings={historicalReadings}
-            historyLoading={historyLoading}
-            historyError={historyError}
+          {/* Reading History page */}
+          <Route
+            path="/readings/history"
+            element={
+              <ProtectedRoute>
+              <ReadingHistory
+                historicalReadings={historicalReadings}
+                historyLoading={historyLoading}
+                historyError={historyError}
+              />
+              </ProtectedRoute>
+            }
           />
-        }
-      />
 
-      {/* Alerts page */}
-      <Route
-        path="/alerts"
-        element={
-          <Alerts
-            historicalReadings={historicalReadings}
+          {/* Alerts page */}
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute>
+              <Alerts
+                historicalReadings={historicalReadings}
+              />
+              </ProtectedRoute>
+            }
           />
-        }
-      />
-    </Routes>
+        </Routes>
 
-    <footer>
-      EV Battery Thermal Monitoring Dashboard · Academic Prototype
-    </footer>
-  </BrowserRouter>
+        <footer>
+          EV Battery Thermal Monitoring Dashboard · Academic Prototype
+        </footer>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;
+
+
+// **********************Version2*********************************
+// import { BrowserRouter, Routes, Route } from "react-router-dom";
+// import { AuthProvider } from "./context/AuthContext";
+// import Navbar from "./components/Navbar";
+// import Dashboard from "./pages/Dashboard";
+// import BatteryManagement from "./pages/BatteryManagement";
+// import SensorReadings from "./pages/SensorReadings";
+// import ReadingHistory from "./pages/ReadingHistory";
+// import Alerts from "./pages/Alerts";
+// import React, { useState, useEffect } from "react";
+// import api from "./api";
+// // import axios from "axios";
+// import {
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip,
+//   Legend,
+//   ResponsiveContainer,
+//   ReferenceLine
+// } from "recharts";
+// import "./App.css";
+
+// function App() {
+//   // Store the battery selected for sensor monitoring
+//   const [selectedBatteryId, setSelectedBatteryId] = useState("");
+
+//   // Store the details entered while registering a battery
+//   const [batteryId, setBatteryId] = useState("");
+//   const [batteryType, setBatteryType] = useState("Lithium-ion");
+//   const [nominalVoltage, setNominalVoltage] = useState("");
+//   const [minimumVoltage, setMinimumVoltage] = useState("");
+//   const [maximumVoltage, setMaximumVoltage] = useState("");
+//   const [warningTemperature, setWarningTemperature] = useState("");
+//   const [criticalTemperature, setCriticalTemperature] = useState("");
+
+//   // Store batteries received from the Spring Boot backend
+//   const [batteries, setBatteries] = useState([]);
+
+//   // Store registration success and error messages
+//   const [batteryMessage, setBatteryMessage] = useState("");
+//   const [batteryError, setBatteryError] = useState("");
+
+//   const [temperature, setTemperature] = useState("");
+//   const [voltage, setVoltage] = useState("");
+//   const [current, setCurrent] = useState("");
+//   const [coolantTemperature, setCoolantTemperature] = useState("");
+//   const [reading, setReading] = useState(null);
+//   const [error, setError] = useState("");
+
+//   // Store historical readings received from the backend
+//   const [historicalReadings, setHistoricalReadings] = useState([]);
+
+//   // Store the loading status while fetching historical readings
+//   const [historyLoading, setHistoryLoading] = useState(false);
+
+//   // Store errors related to historical readings
+//   const [historyError, setHistoryError] = useState("");
+
+//   // Load all registered batteries when the dashboard opens
+//   useEffect(() => {
+//     async function fetchBatteries() {
+//       try {
+//         const response = await axios.get(
+//           api.get("/api/batteries")
+//         );
+
+//         // Store the batteries received from the backend
+//         setBatteries(response.data);
+
+//       } catch (error) {
+//         console.error("Error loading batteries:", error);
+//         setBatteryError(
+//           "Unable to load registered batteries from the backend."
+//         );
+//       }
+//     }
+
+//     fetchBatteries();
+//   }, []);
+
+//   // Load historical readings whenever the selected battery changes
+//   useEffect(() => {
+
+//     // If no battery is selected, clear the historical readings
+//     if (!selectedBatteryId) {
+//       setHistoricalReadings([]);
+//       setHistoryError("");
+//       return;
+//     }
+
+//     async function fetchHistoricalReadings() {
+//       try {
+//         setHistoryLoading(true);
+//         setHistoryError("");
+
+//         // Request previous readings for the selected battery
+//         const response = await axios.get(
+//           	api.get(\/api/readings/battery/$`)`
+//           // `http://localhost:8080/api/readings/battery/${selectedBatteryId}`
+//         );
+
+//         // Sort readings by timestamp, newest first
+//         const sortedReadings = response.data.sort(
+//           (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+//         );
+
+//         setHistoricalReadings(sortedReadings);
+
+//       } catch (error) {
+//         console.error("Error loading historical readings:", error);
+
+//         setHistoricalReadings([]);
+//         setHistoryError(
+//           "Unable to load historical readings from the backend."
+//         );
+
+//       } finally {
+//         setHistoryLoading(false);
+//       }
+//     }
+
+//     fetchHistoricalReadings();
+
+//   }, [selectedBatteryId]);
+
+//   // Send the new battery configuration to the Spring Boot backend
+//   async function handleBatterySubmit(event) {
+//     event.preventDefault();
+
+//     // Clear previous messages
+//     setBatteryMessage("");
+//     setBatteryError("");
+
+//     // Convert the voltage and temperature fields into numbers
+//     const batteryData = {
+//       batteryId: batteryId.trim(),
+//       batteryType: batteryType.trim(),
+//       nominalVoltage: Number(nominalVoltage),
+//       minimumVoltage: Number(minimumVoltage),
+//       maximumVoltage: Number(maximumVoltage),
+//       warningTemperature: Number(warningTemperature),
+//       criticalTemperature: Number(criticalTemperature)
+//     };
+
+//     // Check that all fields have been entered
+//     if (
+//       !batteryData.batteryId ||
+//       !batteryData.batteryType ||
+//       nominalVoltage === "" ||
+//       minimumVoltage === "" ||
+//       maximumVoltage === "" ||
+//       warningTemperature === "" ||
+//       criticalTemperature === ""
+//     ) {
+//       setBatteryError("Please fill in all battery configuration fields.");
+//       return;
+//     }
+
+//     // Check that the entered values are valid numbers
+//     const numericValues = [
+//       batteryData.nominalVoltage,
+//       batteryData.minimumVoltage,
+//       batteryData.maximumVoltage,
+//       batteryData.warningTemperature,
+//       batteryData.criticalTemperature
+//     ];
+
+//     if (!numericValues.every(Number.isFinite)) {
+//       setBatteryError("Please enter valid numeric values.");
+//       return;
+//     }
+
+//     // Check that the voltage limits are in the correct order
+//     if (
+//       batteryData.minimumVoltage <= 0 ||
+//       batteryData.minimumVoltage >= batteryData.nominalVoltage ||
+//       batteryData.nominalVoltage >= batteryData.maximumVoltage
+//     ) {
+//       setBatteryError(
+//         "Voltage limits must follow: minimum < nominal < maximum."
+//       );
+//       return;
+//     }
+
+//     // Critical temperature must be higher than warning temperature
+//     if (
+//       batteryData.warningTemperature <= 0 ||
+//       batteryData.criticalTemperature <= batteryData.warningTemperature
+//     ) {
+//       setBatteryError(
+//         "Critical temperature must be higher than warning temperature."
+//       );
+//       return;
+//     }
+
+//     try {
+//       // Send the battery details to the Spring Boot REST API
+//       const response = await axios.post(
+//        api.post("/api/batteries", batteryData)
+//       );
+
+//       // Display a message after successful registration
+//       setBatteryMessage(
+//         `Battery ${response.data.batteryId} registered successfully!`
+//       );
+
+//       // Clear the form after successful registration
+//       setBatteryId("");
+//       setBatteryType("Lithium-ion");
+//       setNominalVoltage("");
+//       setMinimumVoltage("");
+//       setMaximumVoltage("");
+//       setWarningTemperature("");
+//       setCriticalTemperature("");
+
+//       // Add the newly registered battery to the displayed list
+//       setBatteries((previousBatteries) => [
+//         ...previousBatteries,
+//         response.data
+//       ]);
+
+//     } catch (error) {
+//       // Display the error returned by the backend
+//       setBatteryError(
+//         error.response?.data?.message ||
+//         "Battery registration failed. Please check the backend."
+//       );
+//     }
+//   }
+
+//   // Submit battery sensor readings to the Spring Boot backend
+//   async function handleSubmit(event) {
+//     event.preventDefault();
+
+//     setError("");
+
+//     // Check whether a battery has been selected
+//     if (!selectedBatteryId) {
+//       setError("Please select a registered battery.");
+//       return;
+//     }
+
+//     // Check whether all sensor fields are filled
+//     if (
+//       temperature === "" ||
+//       voltage === "" ||
+//       current === "" ||
+//       coolantTemperature === ""
+//     ) {
+//       setError("Please fill in all sensor fields.");
+//       return;
+//     }
+
+//     // Convert input values into numbers
+//     const temp = Number(temperature);
+//     const volt = Number(voltage);
+//     const amps = Number(current);
+//     const coolant = Number(coolantTemperature);
+
+//     // Validate the sensor values
+//     if (
+//       ![temp, volt, amps, coolant].every(Number.isFinite) ||
+//       temp < -40 || temp > 100 ||
+//       volt <= 0 ||
+//       amps < -1000 || amps > 1000 ||
+//       coolant < -40 || coolant > 100
+//     ) {
+//       setError("Please enter valid sensor values.");
+//       return;
+//     }
+
+//     // Check whether the voltage is within the selected battery's range
+//     const selectedBattery = batteries.find(
+//       (battery) => battery.batteryId === selectedBatteryId
+//     );
+
+//     if (selectedBattery) {
+//       if (
+//         volt < selectedBattery.minimumVoltage ||
+//         volt > selectedBattery.maximumVoltage
+//       ) {
+//         setError(
+//           `Invalid voltage! ${selectedBattery.batteryId} supports readings between ${selectedBattery.minimumVoltage} V and ${selectedBattery.maximumVoltage} V.`
+//         );
+//         return;
+//       }
+//     }
+
+//     // Prepare the reading data for the backend
+//     const readingData = {
+//       batteryId: selectedBatteryId,
+//       temperature: temp,
+//       voltage: volt,
+//       current: amps,
+//       coolantTemperature: coolant
+//     };
+
+//     try {
+//       // Send the sensor reading to Spring Boot
+//       const response = await axios.post(
+//        api.post("/api/readings", readingData)
+//       );
+
+//       // Store the response returned by the backend
+//       const savedReading = response.data;
+
+//       // Update the dashboard with the saved reading
+//       setReading({
+//         temperature: savedReading.temperature,
+//         voltage: savedReading.voltage,
+//         current: savedReading.current,
+//         coolantTemperature: coolant,
+//         risk: savedReading.riskLevel,
+//         time: new Date(savedReading.timestamp).toLocaleTimeString(),
+//         batteryId: savedReading.batteryId
+//       });
+
+//       // Refresh historical readings after successfully saving
+//       const historyResponse = await axios.get(
+//         `http://localhost:8080/api/readings/battery/${selectedBatteryId}`
+//       );
+
+//       // Sort the latest readings first
+//       const updatedHistory = historyResponse.data.sort(
+//         (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+//       );
+
+//       setHistoricalReadings(updatedHistory);
+
+//       // Clear the sensor input fields after successful submission
+//       setTemperature("");
+//       setVoltage("");
+//       setCurrent("");
+//       setCoolantTemperature("");
+
+//     } catch (error) {
+//       console.error("Sensor reading submission error:", error);
+
+//       if (error.response) {
+//         if (error.response.status === 400) {
+//           setError(
+//             error.response.data.message ||
+//             "Invalid sensor reading. Please check the entered values."
+//           );
+//         } else {
+//           setError(
+//             "Something went wrong while processing your reading. Please try again."
+//           );
+//         }
+//       } else if (error.request) {
+//         setError(
+//           "Cannot connect to the backend. Check whether Spring Boot is running."
+//         );
+//       } else {
+//         setError("An unexpected error occurred: " + error.message);
+//       }
+//     }
+//   }
+
+//   // Prepare historical readings for the temperature trend chart
+//   const temperatureChartData = historicalReadings.map((item) => ({
+//     time: new Date(item.timestamp).toLocaleTimeString(),
+//     temperature: item.temperature
+//   }));
+
+//   const selectedBattery = batteries.find(
+//     (battery) => battery.batteryId === selectedBatteryId
+//   );
+
+//   return (
+//      <AuthProvider>
+//      <BrowserRouter>
+//     <Navbar />
+
+//     <Routes>
+//       {/* Dashboard page */}
+//       <Route
+//         path="/"
+//         element={<Dashboard reading={reading} />}
+//       />
+
+//       {/* Battery Management page */}
+//       <Route
+//         path="/batteries"
+//         element={
+//           <BatteryManagement
+//             batteryId={batteryId}
+//             setBatteryId={setBatteryId}
+//             batteryType={batteryType}
+//             setBatteryType={setBatteryType}
+//             nominalVoltage={nominalVoltage}
+//             setNominalVoltage={setNominalVoltage}
+//             minimumVoltage={minimumVoltage}
+//             setMinimumVoltage={setMinimumVoltage}
+//             maximumVoltage={maximumVoltage}
+//             setMaximumVoltage={setMaximumVoltage}
+//             warningTemperature={warningTemperature}
+//             setWarningTemperature={setWarningTemperature}
+//             criticalTemperature={criticalTemperature}
+//             setCriticalTemperature={setCriticalTemperature}
+//             handleBatterySubmit={handleBatterySubmit}
+//             batteries={batteries}
+//             batteryMessage={batteryMessage}
+//             batteryError={batteryError}
+//           />
+//         }
+//       />
+
+//       {/* Sensor Readings page */}
+//       <Route
+//         path="/readings/new"
+//         element={
+//           <SensorReadings
+//             selectedBatteryId={selectedBatteryId}
+//             setSelectedBatteryId={setSelectedBatteryId}
+//             batteries={batteries}
+//             temperature={temperature}
+//             setTemperature={setTemperature}
+//             voltage={voltage}
+//             setVoltage={setVoltage}
+//             current={current}
+//             setCurrent={setCurrent}
+//             coolantTemperature={coolantTemperature}
+//             setCoolantTemperature={setCoolantTemperature}
+//             handleSubmit={handleSubmit}
+//             error={error}
+//           />
+//         }
+//       />
+
+//       {/* Reading History page */}
+//       <Route
+//         path="/readings/history"
+//         element={
+//           <ReadingHistory
+//             historicalReadings={historicalReadings}
+//             historyLoading={historyLoading}
+//             historyError={historyError}
+//           />
+//         }
+//       />
+
+//       {/* Alerts page */}
+//       <Route
+//         path="/alerts"
+//         element={
+//           <Alerts
+//             historicalReadings={historicalReadings}
+//           />
+//         }
+//       />
+//     </Routes>
+
+//     <footer>
+//       EV Battery Thermal Monitoring Dashboard · Academic Prototype
+//     </footer>
+//   </BrowserRouter>
+//   </AuthProvider>
+
+
+
+// **********************Version1***************************
     // <div className="dashboard">
 
     //   {/* Battery registration section */}
@@ -928,10 +1425,10 @@ function App() {
     //     EV Battery Thermal Monitoring Dashboard · Academic Prototype
     //   </footer>
     // </div>
-  );
-}
+  // );
+// }
 
-export default App;
+// export default App;
 
 
 

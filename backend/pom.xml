@@ -59,6 +59,26 @@
 			<scope>test</scope>
 		</dependency>
 		
+        <!-- Spring Security for authentication and authorization -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- JWT support for validating Bearer tokens -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+	<!-- Swagger UI and OpenAPI documentation -->
+	<dependency>
+   		<groupId>org.springdoc</groupId>
+    	<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    	<version>3.2.0</version>
+	</dependency>
+
+
 	
 
 	</dependencies>
