@@ -13,17 +13,7 @@ import api from "./api";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 // import axios from "axios";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ReferenceLine
-} from "recharts";
+
 import "./App.css";
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -362,14 +352,11 @@ function App() {
   }
 
   // Prepare historical readings for the temperature trend chart
-  const temperatureChartData = historicalReadings.map((item) => ({
-    time: new Date(item.timestamp).toLocaleTimeString(),
-    temperature: item.temperature
-  }));
+ 
 
-  const selectedBattery = batteries.find(
-    (battery) => battery.batteryId === selectedBatteryId
-  );
+  // const selectedBattery = batteries.find(
+  //   (battery) => battery.batteryId === selectedBatteryId
+  // );
 
   return (
     <AuthProvider>
