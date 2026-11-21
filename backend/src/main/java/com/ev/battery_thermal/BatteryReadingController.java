@@ -1,6 +1,9 @@
 
 package com.ev.battery_thermal;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.beans.factory.annotation.Value;
+
+// import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,13 +17,19 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/readings")
-@CrossOrigin(origins = "http://localhost:3000")
+// @CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {
+    "http://localhost:3000",
+    "https://ev-battery-thermal-monitoring.vercel.app"
+})
 @SecurityRequirement(name = "bearerAuth")
 public class BatteryReadingController {
 
     private final BatteryReadingRepository readingRepository;
     private final BatteryConfigurationRepository configurationRepository;
     private final RestTemplate restTemplate = new RestTemplate();
+  @Value("${ml.api.url:http://127.0.0.1:5000}")
+private String mlApiUrl;
 
     // Constructor injection for both repositories
     public BatteryReadingController(
@@ -237,7 +246,7 @@ public BatteryReading createReading(@RequestBody BatteryReading reading) {
 
     try {
         Map response = restTemplate.postForObject(
-                "http://127.0.0.1:5000/predict",
+                 mlApiUrl + "/predict",
                 request,
                 Map.class
         );

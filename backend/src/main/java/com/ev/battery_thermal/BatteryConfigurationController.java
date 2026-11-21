@@ -9,7 +9,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/batteries")
-@CrossOrigin(origins = "http://localhost:3000")
+// @CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {
+    "http://localhost:3000",
+    "https://ev-battery-thermal-monitoring.vercel.app"
+})
 @SecurityRequirement(name = "bearerAuth")
 public class BatteryConfigurationController {
 
