@@ -309,6 +309,7 @@ function App() {
 
       // Update the dashboard with the saved reading
       setReading({
+        coolingRequirement: savedReading.coolingRequirement,
         temperature: savedReading.temperature,
         voltage: savedReading.voltage,
         current: savedReading.current,
